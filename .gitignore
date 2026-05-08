@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Ignore all SQL files
+*.sql
+
+# Ignore specific SQL log files or data files
+*.mdf
+*.ldf
+*.sdf

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
+from config.db import get_db_connection
 
 load_dotenv()
 
@@ -20,5 +21,19 @@ jwt = JWTManager(app)
 def home():
     return jsonify({'message': 'Welcome to Autocare!'})
 
+# test db connection & values
+@app.route('/testdb')
+def test():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM locations')
+        locations = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({'locations': [row[1] for row in locations]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True)
