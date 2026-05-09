@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import os
 from config.db import get_db_connection
 from routes.auth import auth_bp
+from routes.services import services_bp
+from routes.locations import locations_bp
 
 load_dotenv()
 
@@ -19,6 +21,8 @@ jwt = JWTManager(app)
 
 #For auth routes
 app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(locations_bp, url_prefix='/locations')
+app.register_blueprint(services_bp, url_prefix='/services')
 
 # Test route
 @app.route('/')
