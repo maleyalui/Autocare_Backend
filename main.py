@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 import os
 from config.db import get_db_connection
+from routes.auth import auth_bp
 
 load_dotenv()
 
@@ -15,6 +16,9 @@ app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 # Extensions
 CORS(app)
 jwt = JWTManager(app)
+
+#For auth routes
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 # Test route
 @app.route('/')
