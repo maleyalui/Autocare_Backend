@@ -7,6 +7,7 @@ from config.db import get_db_connection
 from routes.auth import auth_bp
 from routes.services import services_bp
 from routes.locations import locations_bp
+from routes.emergency import emergency_bp
 
 load_dotenv()
 
@@ -23,6 +24,7 @@ jwt = JWTManager(app)
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(locations_bp, url_prefix='/locations')
 app.register_blueprint(services_bp, url_prefix='/services')
+app.register_blueprint(emergency_bp, url_prefix='/emergency')
 
 # Test route
 @app.route('/')
