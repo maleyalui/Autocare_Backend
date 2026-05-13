@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, json, request, jsonify
 from config.db import get_db_connection
 import bcrypt
 from flask_jwt_extended import create_access_token
@@ -17,6 +17,7 @@ def register():
     phone_number = data.get('phone_number')
     password = data.get('password')
     role = data.get('role', 'user')
+    
     
     # ensure nothing is missing
     if not full_name or not email or not phone_number or not password:
@@ -101,10 +102,10 @@ def login():
             return jsonify({'error': 'Invalid password'}), 401    
         
         #create a JWT token
-        token = create_access_token(identity={
+        token = create_access_token(identity=json.dumps({
             'id': str(user_id),
             'role': role
-        })
+        }))
         
         #send back the token and user info
         return jsonify({

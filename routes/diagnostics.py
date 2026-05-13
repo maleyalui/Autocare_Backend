@@ -6,7 +6,7 @@ diagnostics_bp = Blueprint('diagnostics', __name__)
 
 
 # GET diagnostic centers by location — shown under Diagnostics
-@diagnostics_bp.route('/', methods=['GET'])
+@diagnostics_bp.route('', methods=['GET'])
 def get_diagnostics():
     location_id = request.args.get('location_id')
 
@@ -24,9 +24,9 @@ def get_diagnostics():
                 dc.phone_number,
                 dc.price_from,
                 dc.features,
-                dc.maps_url,
+                dc.map_url,
                 l.name AS location
-            FROM diagnostic_centers dc
+            FROM diagnostics_centres dc
             JOIN locations l ON dc.location_id = l.id
             WHERE dc.location_id = %s::uuid
             AND dc.is_active = true

@@ -6,7 +6,7 @@ carwashes_bp = Blueprint('carwashes', __name__)
 
 
 # GET car washes by location — shown under Car Detailing
-@carwashes_bp.route('/', methods=['GET'])
+@carwashes_bp.route('', methods=['GET'])
 def get_carwashes():
     location_id = request.args.get('location_id')
 
@@ -25,7 +25,7 @@ def get_carwashes():
                 cw.price,
                 cw.is_door_to_door,
                 cw.features,
-                cw.maps_url,
+                cw.map_url,
                 l.name AS location
             FROM car_washes cw
             JOIN locations l ON cw.location_id = l.id

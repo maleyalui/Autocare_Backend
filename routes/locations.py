@@ -3,7 +3,7 @@ from config.db import get_db_connection
 
 locations_bp = Blueprint('locations', __name__)
 
-@locations_bp.route('/', methods=['GET'])
+@locations_bp.route('', methods=['GET'])
 def get_locations():
     try:
         conn = get_db_connection()
