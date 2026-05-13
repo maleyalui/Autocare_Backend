@@ -51,14 +51,14 @@ def get_emergency_providers():
                 ep.phone_number,
                 ep.price,
                 ep.features,
-                ep.maps_url,
-                1.name AS location,
+                ep.map_url,
+                l.name AS location,
                 et.name AS emergency_type
             FROM emergency_providers ep
-            JOIN locations 1 on ep.location_id = 1.id
+            JOIN locations l ON ep.location_id = l.id
             JOIN emergency_types et ON ep.emergency_type_id = et.id
             WHERE ep.emergency_type_id = %s::uuid
-            AND ep.location_id = %::uuid
+            AND ep.location_id = %s::uuid
             AND ep.is_active = true
             ORDER BY ep.name
         ''', (emergency_type_id, location_id))

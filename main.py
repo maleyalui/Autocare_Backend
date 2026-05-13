@@ -10,6 +10,10 @@ from routes.services import services_bp
 from routes.locations import locations_bp
 from routes.emergency import emergency_bp
 from routes.admin import admin_bp
+from routes.requests import requests_bp
+from routes.garages import garages_bp
+from routes.carwash import carwashes_bp
+from routes.diagnostics import diagnostics_bp
 
 load_dotenv()
 
@@ -30,6 +34,10 @@ app.register_blueprint(locations_bp, url_prefix='/locations')
 app.register_blueprint(services_bp, url_prefix='/services')
 app.register_blueprint(emergency_bp, url_prefix='/emergency')
 app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(requests_bp, url_prefix='/requests')
+app.register_blueprint(garages_bp, url_prefix='/garages')
+app.register_blueprint(carwashes_bp, url_prefix='/carwashes')
+app.register_blueprint(diagnostics_bp, url_prefix='/diagnostics')
 
 # Test route
 @app.route('/')
