@@ -1,3 +1,4 @@
+from datetime import timedelta
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -8,6 +9,7 @@ from routes.auth import auth_bp
 from routes.services import services_bp
 from routes.locations import locations_bp
 from routes.emergency import emergency_bp
+from routes.admin import admin_bp
 
 load_dotenv()
 
@@ -15,6 +17,8 @@ app = Flask(__name__)
 
 # Config
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+#needs to log in again after two days
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=2)
 
 # Extensions
 CORS(app)
@@ -25,6 +29,7 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(locations_bp, url_prefix='/locations')
 app.register_blueprint(services_bp, url_prefix='/services')
 app.register_blueprint(emergency_bp, url_prefix='/emergency')
+app.register_blueprint(admin_bp, url_prefix='/admin')
 
 # Test route
 @app.route('/')
