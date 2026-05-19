@@ -60,7 +60,7 @@ def delete_user(user_id):
     
 
 #For Garages
-admin_bp.route('/garages', methods=['GET'])
+@admin_bp.route('/garages', methods=['GET'])
 @jwt_required()
 @admin_required
 def get_garages():
@@ -167,7 +167,7 @@ def get_carwashes():
                      cw.map_url,
                      cw.is_active,
                      l.name AS location
-            FROM carwashes cw
+            FROM car_washes cw
             JOIN locations l ON cw.location_id = l.id
             ORDER BY cw.name
             ''')
@@ -215,7 +215,7 @@ def add_carwash():
         cur = conn.cursor()
         
         cur.execute('''
-            INSERT INTO carwashes (name, location_id, phone_number, price, is_door_to_door, features, map_url, is_active)
+            INSERT INTO car_washes (name, location_id, phone_number, price, is_door_to_door, features, map_url, is_active)
             VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, true)
             RETURNING id
             ''', (name, location_id, phone_number, price, is_door_to_door, features, map_url))
@@ -239,7 +239,7 @@ def delete_carwash(carwash_id):
         conn = get_db_connection()
         cur = conn.cursor()
         
-        cur.execute('DELETE FROM carwashes WHERE id = %s::uuid', (carwash_id,))
+        cur.execute('DELETE FROM car_washes WHERE id = %s::uuid', (carwash_id,))
         conn.commit()
         cur.close()
         conn.close()
@@ -265,7 +265,7 @@ def get_diagnostics():
                      d.map_url,
                      d.is_active,
                         l.name AS location
-            FROM diagnostics d
+            FROM diagnostics_centres d
             JOIN locations l ON d.location_id = l.id
             ORDER BY d.name
             ''')
@@ -311,7 +311,7 @@ def add_diagnostic():
         cur = conn.cursor()
         
         cur.execute('''
-            INSERT INTO diagnostics (name, location_id, phone_number, price_from, features, map_url, is_active)
+            INSERT INTO diagnostics_centres (name, location_id, phone_number, price_from, features, map_url, is_active)
             VALUES (%s, %s::uuid, %s, %s, %s, %s, true)
             RETURNING id
             ''', (name, location_id, phone_number, price_from, features, map_url))
@@ -336,7 +336,7 @@ def delete_diagnostic(diagnostic_id):
         conn = get_db_connection()
         cur = conn.cursor()
         
-        cur.execute('DELETE FROM diagnostics WHERE id = %s::uuid', (diagnostic_id,))
+        cur.execute('DELETE FROM diagnostics_centres WHERE id = %s::uuid', (diagnostic_id,))
         conn.commit()
         cur.close()
         conn.close()
@@ -362,7 +362,7 @@ def get_emergency_providers():
                      ep.features,
                      ep.map_url,
                      ep.is_active,
-                        l.name AS location
+                        l.name AS location,
                         et.name AS emergency_type
             FROM emergency_providers ep
             JOIN locations l ON ep.location_id = l.id
@@ -416,7 +416,7 @@ def add_emergency_provider():
 
         cur.execute('''
             INSERT INTO emergency_providers (emergency_type_id,name, location_id, phone_number, price, features, map_url, is_active)
-            VALUES (%s::uuid,%s, %s::uuid, %s, %s, %s, %s, %s, true)
+            VALUES (%s::uuid,%s, %s::uuid, %s, %s, %s, %s, true)
             RETURNING id
             ''', (emergency_type_id, name, location_id, phone_number, price, features, map_url))
 
@@ -454,6 +454,7 @@ def delete_emergency_provider(emergency_provider_id):
 #service requests
 @admin_bp.route('/requests', methods=['GET'])
 @jwt_required()
+@admin_required
 def get_service_requests():
     try:
         conn = get_db_connection()
@@ -472,9 +473,9 @@ def get_service_requests():
                 s.name AS service,
                 m.full_name AS mechanic_name
             FROM service_requests sr
-            JOIN users u ON sr.user_id = u.id
-            JOIN locations l ON sr.location_id = l.id
-            JOIN services s ON sr.service_id = s.id
+            LEFT JOIN users u ON sr.user_id = u.id
+            LEFT JOIN locations l ON sr.location_id = l.id
+            LEFT JOIN services s ON sr.service_id = s.id
             LEFT JOIN users m ON sr.mechanic_id = m.id
             ORDER BY sr.requested_at DESC
             ''')
@@ -488,8 +489,8 @@ def get_service_requests():
             requests_list.append({
                 'id': row[0],
                 'status': row[1],
-                'requested_at': row[2],
-                'completed_at': row[3],
+                'requested_at': row[2].isoformat() if row[2] else None,
+                'completed_at': row[3].isoformat() if row[3] else None,
                 'client_name': row[4],
                 'client_phone': row[5],
                 'location': row[6],

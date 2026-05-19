@@ -39,7 +39,7 @@ def get_garages():
                 'name': row[1],
                 'phone_number': row[2],
                 'address': row[3],
-                'maps_url': row[4],
+                'map_url': row[4],
                 'location': row[5]
             })
         return jsonify(garages), 200
