@@ -47,7 +47,7 @@ def get_carwashes():
                 'price': str(row[3]),
                 'is_door_to_door': row[4],
                 'features': row[5],
-                'maps_url': row[6],
+                'map_url': row[6],
                 'location': row[7]
             })
 

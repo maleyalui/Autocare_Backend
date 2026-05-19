@@ -75,7 +75,7 @@ def get_emergency_providers():
                 'phone_number': row[2],
                 'price': str(row[3]) if row[3] else 'call for price',
                 'features': row[4],
-                'maps_url': row[5],
+                'map_url': row[5],
                 'location': row[6],
                 'emergency_type': row[7]
             })

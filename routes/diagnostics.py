@@ -45,7 +45,7 @@ def get_diagnostics():
                 'phone_number': row[2],
                 'price_from': str(row[3]),
                 'features': row[4],
-                'maps_url': row[5],
+                'map_url': row[5],
                 'location': row[6]
             })
 

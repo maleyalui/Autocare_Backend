@@ -17,21 +17,28 @@ def create_request():
         return jsonify({'error': 'Only drivers can create requests'}), 403
 
     data = request.get_json()
-    service_id = data.get('service_id')
+    
+    
+    provider_id= data.get('provider_id')
     location_id = data.get('location_id')
 
-    if not service_id or not location_id:
-        return jsonify({'error': 'service_id and location_id are required'}), 400
+    if not provider_id or not location_id:
+        return jsonify({'error': ' provider_id, and location_id are required'}), 400
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute('''
-            INSERT INTO service_requests (user_id, service_id, location_id, status)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, 'pending')
+            INSERT INTO service_requests (
+                user_id,
+                provider_id,
+                location_id,
+                status
+                )
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
             RETURNING id
-        ''', (user_id, service_id, location_id))
+        ''', (user_id, provider_id, location_id, 'pending'))
 
         new_id = cur.fetchone()[0]
         conn.commit()
@@ -66,11 +73,11 @@ def get_requests():
                 u.full_name AS client_name,
                 u.phone_number AS client_phone,
                 l.name AS location,
-                s.name AS service
+                ep.name AS provider
             FROM service_requests sr
             JOIN users u ON sr.user_id = u.id
             JOIN locations l ON sr.location_id = l.id
-            JOIN services s ON sr.service_id = s.id
+            LEFT JOIN emergency_providers ep ON sr.provider_id = ep.id
             WHERE sr.status = 'pending'
             ORDER BY sr.requested_at DESC
         ''')
@@ -88,7 +95,7 @@ def get_requests():
                 'client_name': row[3],
                 'client_phone': row[4],
                 'location': row[5],
-                'service': row[6]
+                'provider': row[6]
             })
 
         return jsonify({'requests': requests_list}), 200
@@ -218,12 +225,12 @@ def get_single_request(request_id):
                 u.full_name AS client_name,
                 u.phone_number AS client_phone,
                 l.name AS location,
-                s.name AS service,
+                m.full_name AS provider_name,
                 sr.requested_at
             FROM service_requests sr
             JOIN users u ON sr.user_id = u.id
             JOIN locations l ON sr.location_id = l.id
-            JOIN services s ON sr.service_id = s.id
+            LEFT JOIN mechanic_profiles m ON  m.id = sr.mechanic_id
             WHERE sr.id = %s::uuid
         ''', (request_id,))
 
@@ -240,7 +247,7 @@ def get_single_request(request_id):
             'client_name': row[2],
             'client_phone': row[3],
             'location': row[4],
-            'service': row[5],
+            'provider_name': row[5],
             'requested_at': row[6].isoformat()
         }), 200
 
