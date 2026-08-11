@@ -1,3 +1,10 @@
+import resend
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+resend.api_key = os.getenv('RESEND_API_KEY')
+
 def send_verification_email(full_name, email, code):
     subject = "Verify Your Auto Care Account"  # Added this so the code works
     body = f"""
