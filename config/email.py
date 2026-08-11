@@ -6,6 +6,7 @@ load_dotenv()
 
 resend.api_key = os.getenv('RESEND_API_KEY')
 
+
 def send_verification_email(full_name, email, code):
     params: resend.Emails.SendParams = {
         "from": "Auto Care <onboarding@resend.dev>",
