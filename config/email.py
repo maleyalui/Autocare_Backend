@@ -1,4 +1,5 @@
 def send_verification_email(full_name, email, code):
+    subject = "Verify Your Auto Care Account"  # Added this so the code works
     body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style= "background-color: #385d04; padding: 20px; border-radius: 12px 12px 0 0 ; text-align: center;">
@@ -15,10 +16,13 @@ def send_verification_email(full_name, email, code):
     </div>
     """
     
-   params = {
-    "from": "Auto Care <onboarding@resend.dev>",
-    "to": [email],
-    "subject": subject,
-    "html": body
+    
+    params = {
+        "from": "Auto Care <onboarding@resend.dev>",
+        "to": [email],
+        "subject": subject,
+        "html": body
     }
-resend.Emails.send(params)
+    
+    
+    resend.Emails.send(params)
