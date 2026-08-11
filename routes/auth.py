@@ -72,7 +72,7 @@ def register():
         
         # send verification code via email and SMS
         try:
-            send_verification_email(email, code)
+            send_verification_email(full_name,email, code)
         except Exception as e:
             print(f"Failed to send verification email: {e}")
         
@@ -90,51 +90,52 @@ def register():
 #login route
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    
-    #get the data the user sends
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    
+
     if not email or not password:
         return jsonify({'error': 'Email and password are required'}), 400
-    
+
+    conn = None
+    cur = None
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        cur.execute('SELECT id, full_name, role, password_hash FROM users WHERE email = %s', (email,))
+
+        # Get everything in ONE query
+        cur.execute('''
+            SELECT id, full_name, role, password_hash, is_verified
+            FROM users
+            WHERE email = %s
+        ''', (email,))
         user = cur.fetchone()
-        
-        cur.close()
-        conn.close()
-        
+
         if not user:
             return jsonify({'error': 'Invalid email or password'}), 401
-        
+
         user_id = user[0]
         full_name = user[1]
         role = user[2]
         password_hash = user[3]
-        
-        #check is the user is verified
-        cur.execute('SELECT is_verified FROM users WHERE id = %s', (user_id,))
-        is_verified = cur.fetchone()[0]
-        if not is_verified:
-            return jsonify({'error': 'Please verify your email and phone number before logging in'}), 401
+        is_verified = user[4]
 
-        #check if password is correct
-        password_match = bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))    
+        # Check verified
+        if not is_verified:
+            return jsonify({'error': 'Please verify your account first. Check your email and phone for the code.'}), 403
+
+        # Check password
+        password_match = bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
         if not password_match:
-            return jsonify({'error': 'Invalid password'}), 401    
-        
-        #create a JWT token
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        # Create token
         token = create_access_token(identity=json.dumps({
             'id': str(user_id),
             'role': role
         }))
-        
-        #send back the token and user info
+
         return jsonify({
             'message': 'Login successful',
             'token': token,
@@ -144,10 +145,15 @@ def login():
                 'role': role
             }
         }), 200
-        
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500    
-    
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()   
 
 @auth_bp.route('/verify', methods=['POST'])
 def verify():
