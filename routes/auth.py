@@ -22,4 +22,189 @@ def register():
     role = data.get('role', 'user')
     specialization = data.get('specialization')
 
-    if not full_name or not email or not
+    if not full_name or not email or not phone_number or not password:
+        return jsonify({'error': 'All fields are required'}), 400
+
+    if role not in ['user', 'mechanic']:
+        return jsonify({'error': 'Role must be user or mechanic'}), 400
+
+    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    code = ''.join(random.choices(string.digits, k=6))
+    expires = datetime.utcnow() + timedelta(minutes=10)
+
+    conn = None
+    cur = None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('SELECT id FROM users WHERE email = %s', (email,))
+        if cur.fetchone():
+            return jsonify({'error': 'Email already registered'}), 400
+
+        cur.execute('''
+            INSERT INTO users (full_name, email, phone_number, password_hash, role, is_verified, verification_code, verification_expires)
+            VALUES (%s, %s, %s, %s, %s, false, %s, %s)
+            RETURNING id
+        ''', (full_name, email, phone_number, password_hash, role, code, expires))
+
+        new_user_id = cur.fetchone()[0]
+
+        if role == 'mechanic':
+            cur.execute('''
+                INSERT INTO mechanic_profiles (user_id, is_active, specialization)
+                VALUES (%s, false, %s)
+            ''', (new_user_id, specialization))
+
+        conn.commit()
+
+        # Send verification email
+        print(f"Sending email to {email} with code {code}")
+        try:
+            send_verification_email(full_name, email, code)
+            print("Email sent successfully")
+        except Exception as e:
+            print(f"Email failed: {e}")
+
+        # Send verification SMS
+        print(f"Sending SMS to {phone_number}")
+        try:
+            send_verification_sms(phone_number, code)
+            print("SMS sent successfully")
+        except Exception as e:
+            print(f"SMS failed: {e}")
+
+        return jsonify({
+            'message': 'Account registered. Please verify your email and phone number.'
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+# ─── LOGIN ──────────────────────────────────────────────
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
+
+    conn = None
+    cur = None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+            SELECT id, full_name, role, password_hash, is_verified
+            FROM users
+            WHERE email = %s
+        ''', (email,))
+        user = cur.fetchone()
+
+        if not user:
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        user_id = user[0]
+        full_name = user[1]
+        role = user[2]
+        password_hash = user[3]
+        is_verified = user[4]
+
+        if not is_verified:
+            return jsonify({'error': 'Please verify your account first. Check your email and phone for the code.'}), 403
+
+        password_match = bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+        if not password_match:
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        token = create_access_token(identity=json.dumps({
+            'id': str(user_id),
+            'role': role
+        }))
+
+        return jsonify({
+            'message': 'Login successful',
+            'token': token,
+            'user': {
+                'id': str(user_id),
+                'full_name': full_name,
+                'role': role
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+# ─── VERIFY ─────────────────────────────────────────────
+@auth_bp.route('/verify', methods=['POST'])
+def verify():
+    data = request.get_json()
+    email = data.get('email')
+    code = data.get('code')
+
+    if not email or not code:
+        return jsonify({'error': 'Email and code are required'}), 400
+
+    conn = None
+    cur = None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('SELECT id FROM users WHERE email = %s', (email,))
+        user = cur.fetchone()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_id = user[0]
+
+        cur.execute('SELECT verification_code, verification_expires FROM users WHERE id = %s', (user_id,))
+        saved_code, expires = cur.fetchone()
+
+        if saved_code != code:
+            return jsonify({'error': 'Invalid verification code'}), 400
+
+        if datetime.utcnow() > expires:
+            return jsonify({'error': 'Verification code has expired. Please register again'}), 400
+
+        cur.execute('''
+            UPDATE users
+            SET is_verified = true,
+                verification_code = null,
+                verification_expires = null
+            WHERE id = %s
+        ''', (user_id,))
+
+        conn.commit()
+
+        return jsonify({'message': 'Verification successful. You can now log in.'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
