@@ -15,9 +15,10 @@ def send_verification_email(full_name, email, code):
     </div>
     """
     
-    resend.Emails.send({
-        from: "Auto Care <support@autocare.com>",
-        to: email,
-        subject: "Verify your email address",
-        html: body
-    })
+   params = {
+    "from": "Auto Care <onboarding@resend.dev>",
+    "to": [email],
+    "subject": subject,
+    "html": body
+    }
+resend.Emails.send(params)
