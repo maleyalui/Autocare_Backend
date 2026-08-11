@@ -3,7 +3,7 @@ import string
 from datetime import datetime, timedelta
 from config.email import send_verification_email
 from flask import Blueprint, json, request, jsonify
-from config.email import send_verification_sms
+from config.sms import send_verification_sms
 from config.db import get_db_connection
 import bcrypt
 from flask_jwt_extended import create_access_token
