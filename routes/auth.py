@@ -84,6 +84,22 @@ def register():
         return jsonify({
             'message': 'Account registered. Please verify your email and phone number.'
             }), 201
+        # send verification code via email and SMS
+        print(f"Attempting to send email to: {email}")
+        print(f"Attempting to send SMS to: {phone_number}")
+        print(f"Verification code: {code}")
+
+        try:
+        send_verification_email(full_name, email, code)
+        print("Email sent successfully")
+        except Exception as e:
+        print(f"Email failed: {e}")
+
+        try:
+        send_verification_sms(phone_number, code)
+        print("SMS sent successfully")
+        except Exception as e:
+        print(f"SMS failed: {e}")
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
