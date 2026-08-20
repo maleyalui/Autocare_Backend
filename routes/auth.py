@@ -2,7 +2,7 @@ import random
 import string
 from datetime import datetime, timedelta
 from config.email import send_verification_email
-from config.sms import send_verification_sms
+#from config.sms import send_verification_sms
 from flask import Blueprint, json, request, jsonify
 from config.db import get_db_connection
 import bcrypt
@@ -67,17 +67,9 @@ def register():
             print("Email sent successfully")
         except Exception as e:
             print(f"Email failed: {e}")
-
-        # Send verification SMS
-        print(f"Sending SMS to {phone_number}")
-        try:
-            send_verification_sms(phone_number, code)
-            print("SMS sent successfully")
-        except Exception as e:
-            print(f"SMS failed: {e}")
-
+            
         return jsonify({
-            'message': 'Account registered. Please verify your email and phone number.'
+            'message': 'Account registered. Please verify your email address.'
         }), 201
 
     except Exception as e:
